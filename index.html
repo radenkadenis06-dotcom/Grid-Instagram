@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid Instagram</title>
+<style>
+  /* Layout: dua bagian. Kiri = pengaturan tiga langkah. Kanan = mekanisme grid (tab Grid / Reels + 6 slot). Latar hitam. */
+  :root {
+    color-scheme: dark;
+    --bg: #000000;
+    --surface: #121212;
+    --elev: #1c1c1c;
+    --line: #262626;
+    --fg: #f5f5f5;
+    --muted: #a8a8a8;
+    --blue: #0095f6;
+    --blue-hover: #1877f2;
+    --btn2: #363636;
+    --guide: #feda75;
+    --ig: linear-gradient(45deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 28px 16px 56px;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  h1 { font-size: 26px; line-height: 1.2; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  h1 span {
+    background: var(--ig); -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lead { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
+
+  button { font: inherit; color: inherit; }
+  button:focus-visible, .cell:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; min-width: 0; }
+  .settings { padding: 20px; display: flex; flex-direction: column; gap: 24px; }
+
+  /* Langkah */
+  .step-h { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; margin-bottom: 12px; }
+  .step-h .n {
+    width: 24px; height: 24px; border-radius: 50%; flex: none; background: var(--ig); color: #000;
+    display: grid; place-items: center; font-size: 13px; font-weight: 700;
+  }
+  .sub { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+  .sub + .formats { margin-bottom: 14px; }
+  .formats { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+  .fmt {
+    text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; min-width: 0;
+    border: 2px solid transparent;
+    background: linear-gradient(var(--elev), var(--elev)) padding-box, linear-gradient(var(--line), var(--line)) border-box;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .fmt .r { font-weight: 700; font-size: 18px; line-height: 1.2; }
+  .fmt .n { font-size: 12px; color: var(--muted); }
+  .fmt .p { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .fmt[aria-pressed="true"] {
+    background: linear-gradient(var(--elev), var(--elev)) padding-box, var(--ig) border-box;
+  }
+
+  /* Pratinjau slot */
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .frame {
+    --num: 0.8;
+    position: relative; aspect-ratio: var(--ratio, 4 / 5); max-width: 100%;
+    width: min(100%, calc(360px * var(--num)));
+    background: var(--elev); border: 1px solid var(--line); border-radius: 4px; overflow: hidden;
+  }
+  .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .empty {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 4px; padding: 12px; color: var(--muted); font-size: 13px;
+  }
+  .empty b { font-size: 38px; line-height: 1; color: var(--fg); }
+  .safe {
+    position: absolute; left: 0; right: 0; height: 13%; border: 0 dashed var(--guide);
+    background: rgba(254, 218, 117, 0.16); font-size: 11px; font-weight: 600; color: var(--guide);
+    display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 6px;
+  }
+  .safe.top { top: 0; border-bottom-width: 2px; }
+  .safe.bottom { bottom: 0; border-top-width: 2px; }
+  .tools { align-self: stretch; display: flex; flex-wrap: wrap; gap: 8px; }
+  .btn {
+    font-weight: 600; font-size: 14px; padding: 8px 16px; border-radius: 8px; cursor: pointer; border: 0;
+    background: var(--btn2); color: #fff;
+  }
+  .btn.primary { background: var(--blue); }
+  .btn.primary:hover { background: var(--blue-hover); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .btn[aria-pressed="true"] { background: var(--guide); color: #000; }
+  .info { align-self: stretch; margin: 0; font-size: 13px; color: var(--muted); }
+  .info b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* Atur grid */
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .seg { display: inline-flex; background: var(--elev); border-radius: 8px; padding: 3px; gap: 2px; }
+  .seg button { font-weight: 600; font-size: 13px; padding: 6px 14px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--btn2); color: #fff; }
+  .count { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .count b { color: var(--fg); }
+
+  /* Bagian kanan: mekanisme grid */
+  .gridcard { overflow: hidden; }
+  .tabs { display: flex; border-bottom: 1px solid var(--line); }
+  .tab {
+    flex: 1; display: grid; place-items: center; padding: 14px 0 12px; cursor: pointer; border: 0; background: transparent;
+    color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .tab svg { width: 26px; height: 26px; display: block; }
+  .tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--fg); }
+  .grid {
+    --tratio: 3 / 4;
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding-top: 2px;
+  }
+  .cell {
+    position: relative; aspect-ratio: var(--tratio); max-width: 100%; overflow: hidden; cursor: pointer;
+    background: var(--tone, #151515);
+  }
+  .cell.is-sel { box-shadow: inset 0 0 0 3px var(--blue); }
+  .cell.is-over { box-shadow: inset 0 0 0 3px var(--guide); }
+  .cell img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; padding: 6px; }
+  .ph .num { font-weight: 700; font-size: 26px; line-height: 1; }
+  .ph .hint { font-size: 11px; color: var(--muted); line-height: 1.3; }
+  .badge {
+    position: absolute; left: 6px; bottom: 6px; font-size: 11px; font-weight: 600; padding: 2px 7px;
+    border-radius: 99px; background: rgba(0, 0, 0, 0.7); color: #fff; font-variant-numeric: tabular-nums;
+  }
+  .tip { margin: 0; padding: 12px 16px 14px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .btn, .tab, .seg button { transition: background-color 0.15s ease, color 0.15s ease; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1><span>Grid</span> Instagram</h1>
+    <p class="lead">Susun 6 postingan sebelum diunggah. Pilih format di kiri, lalu isi kotak di kanan.</p>
+  </header>
+
+  <div class="layout">
+    <section class="card settings" aria-label="Pengaturan">
+      <div>
+        <div class="step-h"><span class="n">1</span>Pilih format postingan</div>
+        <p class="sub">Feed (foto / carousel)</p>
+        <div class="formats" id="feed-formats"></div>
+        <p class="sub">Story &amp; Reels</p>
+        <div class="formats" id="story-formats"></div>
+      </div>
+
+      <div>
+        <div class="step-h"><span class="n">2</span>Isi gambar ke slot</div>
+        <div class="stage">
+          <div class="frame" id="frame"></div>
+          <div class="tools">
+            <button type="button" class="btn primary" id="btn-upload">Unggah gambar</button>
+            <button type="button" class="btn" id="btn-remove">Hapus</button>
+            <button type="button" class="btn" id="btn-safe" aria-pressed="false" hidden>Zona aman</button>
+          </div>
+          <p class="info" id="info"></p>
+        </div>
+      </div>
+
+      <div>
+        <div class="step-h"><span class="n">3</span>Atur grid</div>
+        <div class="row">
+          <div class="seg" id="seg" role="group" aria-label="Rasio kotak grid">
+            <button type="button" id="t34" data-t="3 / 4" aria-pressed="true">Grid 3:4</button>
+            <button type="button" id="t45" data-t="4 / 5" aria-pressed="false">Grid 4:5</button>
+          </div>
+          <span class="count"><b id="filled">0</b> dari 6 slot terisi</span>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button type="button" class="btn primary" id="btn-download">Unduh susunan (PNG)</button>
+          <button type="button" class="btn" id="btn-reset">Kosongkan semua</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card gridcard" aria-label="Grid">
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab" role="tab" id="tab-grid" aria-selected="true" aria-label="Grid postingan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
+          </svg>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-reels" aria-selected="false" aria-label="Reels">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8.5h18M9 3l3 5.5M15 3l3 5.5"/>
+            <path d="M10.2 11.8v5l4.3-2.5z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+      <div class="grid" id="grid"></div>
+      <p class="tip">Ketuk kotak untuk memilih atau mengisi slot. Di desktop, seret gambar ke kotak lain untuk menukar urutan. Gambar tidak diunggah ke mana pun.</p>
+    </section>
+  </div>
+  <input type="file" id="file" accept="image/*" hidden>
+</main>
+
+<script>
+(function () {
+  var COUNT = 6;
+  var FORMATS = [
+    { id: 'square', group: 'feed',  ratio: '1:1',    name: 'Persegi',       w: 1080, h: 1080 },
+    { id: 'p45',    group: 'feed',  ratio: '4:5',    name: 'Potret',        w: 1080, h: 1350 },
+    { id: 'p34',    group: 'feed',  ratio: '3:4',    name: 'Potret',        w: 1080, h: 1440 },
+    { id: 'l191',   group: 'feed',  ratio: '1.91:1', name: 'Lanskap',       w: 1080, h: 566 },
+    { id: 'l169',   group: 'feed',  ratio: '16:9',   name: 'Lanskap',       w: 1080, h: 608 },
+    { id: 'story',  group: 'story', ratio: '9:16',   name: 'Story & Reels', w: 1080, h: 1920 }
+  ];
+  var TONES = ['#141414', '#171415', '#1a1416', '#1d1417', '#20141a', '#23141c'];
+  var slots = new Array(COUNT).fill(null);
+  var selected = 0;
+  var fmt = FORMATS[1];
+  var gridRatio = { css: '3 / 4', num: 0.75, label: '3:4' };
+  var tab = 'grid';
+  var safeOn = false;
+  var dragFrom = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var grid = $('grid'), file = $('file'), frame = $('frame');
+
+  function thumb() {
+    return tab === 'reels' ? { css: '9 / 16', num: 9 / 16, label: '9:16' } : gridRatio;
+  }
+
+  function renderFormats() {
+    ['feed', 'story'].forEach(function (g) {
+      var box = $(g + '-formats');
+      box.innerHTML = '';
+      FORMATS.filter(function (f) { return f.group === g; }).forEach(function (f) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'fmt'; b.id = 'fmt-' + f.id;
+        b.setAttribute('aria-pressed', f === fmt ? 'true' : 'false');
+        b.innerHTML = '<span class="r">' + f.ratio + '</span><span class="n">' + f.name +
+          '</span><span class="p">' + f.w + ' × ' + f.h + ' px</span>';
+        b.addEventListener('click', function () {
+          fmt = f;
+          if (f.id !== 'story') safeOn = false;
+          renderFormats(); renderPreview();
+        });
+        box.appendChild(b);
+      });
+    });
+  }
+
+  function renderPreview() {
+    var num = fmt.w / fmt.h;
+    frame.style.setProperty('--ratio', fmt.w + ' / ' + fmt.h);
+    frame.style.setProperty('--num', String(num));
+    frame.innerHTML = '';
+    var src = slots[selected];
+    if (src) {
+      var img = document.createElement('img');
+      img.src = src; img.alt = 'Slot ' + (selected + 1) + ' dalam format ' + fmt.ratio;
+      frame.appendChild(img);
+    } else {
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.innerHTML = '<b>' + (selected + 1) + '</b><span>Slot kosong<br>' + fmt.w + ' × ' + fmt.h + ' px</span>';
+      frame.appendChild(e);
+    }
+    var isStory = fmt.id === 'story';
+    $('btn-safe').hidden = !isStory;
+    $('btn-safe').setAttribute('aria-pressed', safeOn ? 'true' : 'false');
+    if (isStory && safeOn) {
+      ['top', 'bottom'].forEach(function (p) {
+        var s = document.createElement('div');
+        s.className = 'safe ' + p;
+        s.textContent = 'Area tertutup tampilan Instagram';
+        frame.appendChild(s);
+      });
+    }
+    $('btn-upload').textContent = src ? 'Ganti gambar' : 'Unggah gambar';
+    $('btn-remove').disabled = !src;
+
+    var t = thumb(), vis, how;
+    if (Math.abs(num - t.num) < 0.01) { vis = 100; how = 'tampil penuh'; }
+    else if (num > t.num) { vis = Math.round(t.num / num * 100); how = 'sisi kiri dan kanan terpotong'; }
+    else { vis = Math.round(num / t.num * 100); how = 'sisi atas dan bawah terpotong'; }
+    $('info').innerHTML = 'Slot <b>' + (selected + 1) + '</b> · ' + fmt.name + ' <b>' + fmt.ratio +
+      '</b>. Di ' + (tab === 'reels' ? 'tab Reels' : 'grid profil') + ' ' + t.label + ': <b>' + vis +
+      '%</b> gambar terlihat, ' + how + '.';
+  }
+
+  function renderGrid() {
+    var t = thumb();
+    grid.style.setProperty('--tratio', t.css);
+    $('seg').hidden = tab === 'reels';
+    $('tab-grid').setAttribute('aria-selected', tab === 'grid' ? 'true' : 'false');
+    $('tab-reels').setAttribute('aria-selected', tab === 'reels' ? 'true' : 'false');
+    grid.innerHTML = '';
+    var filled = 0;
+    slots.forEach(function (src, i) {
+      var cell = document.createElement('div');
+      cell.className = 'cell' + (i === selected ? ' is-sel' : '');
+      cell.id = 'cell-' + (i + 1);
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('tabindex', '0');
+      cell.style.setProperty('--tone', TONES[i]);
+      cell.setAttribute('aria-label', 'Slot ' + (i + 1) + (src ? ', pilih' : ', unggah gambar'));
+      if (src) {
+        filled++;
+        cell.draggable = true;
+        var img = document.createElement('img');
+        img.src = src; img.alt = '';
+        cell.appendChild(img);
+        var b = document.createElement('span');
+        b.className = 'badge'; b.textContent = i + 1;
+        cell.appendChild(b);
+      } else {
+        var ph = document.createElement('div');
+        ph.className = 'ph';
+        ph.innerHTML = '<span class="num">' + (i + 1) + '</span><span class="hint">Ketuk untuk unggah</span>';
+        cell.appendChild(ph);
+      }
+      function choose() {
+        selected = i;
+        renderGrid(); renderPreview();
+        if (!slots[i]) file.click();
+      }
+      cell.addEventListener('click', choose);
+      cell.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); }
+      });
+      cell.addEventListener('dragstart', function (e) {
+        dragFrom = i;
+        try { e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.effectAllowed = 'move'; } catch (err) {}
+      });
+      cell.addEventListener('dragover', function (e) { e.preventDefault(); cell.classList.add('is-over'); });
+      cell.addEventListener('dragleave', function () { cell.classList.remove('is-over'); });
+      cell.addEventListener('drop', function (e) {
+        e.preventDefault();
+        cell.classList.remove('is-over');
+        var files = e.dataTransfer && e.dataTransfer.files;
+        if (files && files.length) { selected = i; load(files[0], i); return; }
+        if (dragFrom !== null && dragFrom !== i) {
+          var tmp = slots[i]; slots[i] = slots[dragFrom]; slots[dragFrom] = tmp;
+          selected = i;
+        }
+        dragFrom = null;
+        renderGrid(); renderPreview();
+      });
+      grid.appendChild(cell);
+    });
+    $('filled').textContent = filled;
+  }
+
+  function load(f, i) {
+    if (!f || f.type.indexOf('image/') !== 0) return;
+    var r = new FileReader();
+    r.onload = function () { slots[i] = r.result; renderGrid(); renderPreview(); };
+    r.readAsDataURL(f);
+  }
+
+  function loadImage(src) {
+    return new Promise(function (resolve) {
+      if (!src) { resolve(null); return; }
+      var im = new Image();
+      im.onload = function () { resolve(im); };
+      im.onerror = function () { resolve(null); };
+      im.src = src;
+    });
+  }
+
+  function download() {
+    var t = thumb();
+    var cw = 540, ch = Math.round(cw / t.num), gap = 4;
+    var cv = document.createElement('canvas');
+    cv.width = 3 * cw + 2 * gap;
+    cv.height = 2 * ch + gap;
+    var ctx = cv.getContext('2d');
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    Promise.all(slots.map(loadImage)).then(function (imgs) {
+      imgs.forEach(function (im, i) {
+        var x = (i % 3) * (cw + gap), y = Math.floor(i / 3) * (ch + gap);
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x, y, cw, ch); ctx.clip();
+        if (im) {
+          var s = Math.max(cw / im.naturalWidth, ch / im.naturalHeight);
+          var dw = im.naturalWidth * s, dh = im.naturalHeight * s;
+          ctx.drawImage(im, x + (cw - dw) / 2, y + (ch - dh) / 2, dw, dh);
+        } else {
+          ctx.fillStyle = TONES[i];
+          ctx.fillRect(x, y, cw, ch);
+        }
+        ctx.restore();
+      });
+      cv.toBlob(function (blob) {
+        if (!blob) return;
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'grid-instagram-' + t.label.replace(':', 'x') + '.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+      }, 'image/png');
+    });
+  }
+
+  file.addEventListener('change', function () {
+    if (file.files && file.files[0]) load(file.files[0], selected);
+    file.value = '';
+  });
+  $('btn-upload').addEventListener('click', function () { file.click(); });
+  $('btn-remove').addEventListener('click', function () { slots[selected] = null; renderGrid(); renderPreview(); });
+  $('btn-safe').addEventListener('click', function () { safeOn = !safeOn; renderPreview(); });
+  $('btn-reset').addEventListener('click', function () { slots = new Array(COUNT).fill(null); renderGrid(); renderPreview(); });
+  $('btn-download').addEventListener('click', download);
+  $('tab-grid').addEventListener('click', function () { tab = 'grid'; renderGrid(); renderPreview(); });
+  $('tab-reels').addEventListener('click', function () { tab = 'reels'; renderGrid(); renderPreview(); });
+
+  document.querySelectorAll('#seg button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var v = btn.getAttribute('data-t');
+      gridRatio = v === '4 / 5' ? { css: v, num: 0.8, label: '4:5' } : { css: v, num: 0.75, label: '3:4' };
+      document.querySelectorAll('#seg button').forEach(function (o) {
+        o.setAttribute('aria-pressed', o === btn ? 'true' : 'false');
+      });
+      renderGrid(); renderPreview();
+    });
+  });
+
+  renderFormats();
+  renderGrid();
+  renderPreview();
+})();
+</script>
+</body>
+</html>
