@@ -137,6 +137,10 @@
     position: absolute; left: 6px; bottom: 6px; font-size: 11px; font-weight: 600; padding: 2px 7px;
     border-radius: 99px; background: rgba(0, 0, 0, 0.7); color: #fff; font-variant-numeric: tabular-nums;
   }
+  .swap {
+    position: absolute; right: 6px; bottom: 6px; border: 0; border-radius: 6px; padding: 5px 10px;
+    font-size: 12px; font-weight: 600; background: var(--blue); color: #fff; cursor: pointer;
+  }
   .tip { margin: 0; padding: 12px 16px 14px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -205,7 +209,7 @@
         </button>
       </div>
       <div class="grid" id="grid"></div>
-      <p class="tip">Ketuk kotak untuk memilih atau mengisi slot. Di desktop, seret gambar ke kotak lain untuk menukar urutan. Gambar tidak diunggah ke mana pun.</p>
+      <p class="tip">Ketuk kotak kosong untuk mengisi. Untuk mengganti gambar, ketuk kotak yang dipilih sekali lagi atau tekan tombol Ganti. Di desktop, seret gambar ke kotak lain untuk menukar urutan. Gambar tidak diunggah ke mana pun.</p>
     </section>
   </div>
   <input type="file" id="file" accept="image/*" hidden>
@@ -322,6 +326,13 @@
         var b = document.createElement('span');
         b.className = 'badge'; b.textContent = i + 1;
         cell.appendChild(b);
+        if (i === selected) {
+          var sw = document.createElement('button');
+          sw.type = 'button'; sw.className = 'swap'; sw.textContent = 'Ganti';
+          sw.setAttribute('aria-label', 'Ganti gambar slot ' + (i + 1));
+          sw.addEventListener('click', function (ev) { ev.stopPropagation(); file.click(); });
+          cell.appendChild(sw);
+        }
       } else {
         var ph = document.createElement('div');
         ph.className = 'ph';
@@ -329,9 +340,10 @@
         cell.appendChild(ph);
       }
       function choose() {
+        var again = selected === i;
         selected = i;
         renderGrid(); renderPreview();
-        if (!slots[i]) file.click();
+        if (!slots[i] || again) file.click();
       }
       cell.addEventListener('click', choose);
       cell.addEventListener('keydown', function (e) {
