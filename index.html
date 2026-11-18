@@ -175,6 +175,7 @@
             <button type="button" class="btn" id="btn-safe" aria-pressed="false" hidden>Zona aman</button>
           </div>
           <p class="info" id="info"></p>
+          <p class="info" id="msg" role="status" hidden style="color:var(--guide)"></p>
         </div>
       </div>
 
@@ -373,10 +374,28 @@
   }
 
   function load(f, i) {
-    if (!f || f.type.indexOf('image/') !== 0) return;
+    if (!f) return;
+    var okType = f.type.indexOf('image/') === 0 || /\.(jpe?g|png|webp|gif|avif|bmp|heic|heif)$/i.test(f.name || '');
+    if (!okType) { showMsg('File "' + (f.name || '') + '" bukan gambar. Pilih file JPG, PNG, atau WebP.'); return; }
     var r = new FileReader();
-    r.onload = function () { slots[i] = r.result; renderGrid(); renderPreview(); };
+    r.onerror = function () { showMsg('File tidak bisa dibaca. Coba pilih ulang.'); };
+    r.onload = function () {
+      loadImage(r.result).then(function (im) {
+        if (!im) {
+          showMsg('Browser tidak bisa menampilkan file ini (misalnya format HEIC dari iPhone). Ubah ke JPG atau PNG lalu unggah lagi.');
+          return;
+        }
+        showMsg('');
+        slots[i] = r.result; renderGrid(); renderPreview();
+      });
+    };
     r.readAsDataURL(f);
+  }
+
+  function showMsg(t) {
+    var m = $('msg');
+    m.textContent = t;
+    m.hidden = !t;
   }
 
   function loadImage(src) {
