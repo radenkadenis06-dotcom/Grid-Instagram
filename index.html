@@ -375,21 +375,58 @@
 
   function load(f, i) {
     if (!f) return;
+    var isHeic = /image\/hei[cf]/i.test(f.type) || /\.hei[cf]$/i.test(f.name || '');
     var okType = f.type.indexOf('image/') === 0 || /\.(jpe?g|png|webp|gif|avif|bmp|heic|heif)$/i.test(f.name || '');
-    if (!okType) { showMsg('File "' + (f.name || '') + '" bukan gambar. Pilih file JPG, PNG, atau WebP.'); return; }
-    var r = new FileReader();
-    r.onerror = function () { showMsg('File tidak bisa dibaca. Coba pilih ulang.'); };
-    r.onload = function () {
-      loadImage(r.result).then(function (im) {
-        if (!im) {
-          showMsg('Browser tidak bisa menampilkan file ini (misalnya format HEIC dari iPhone). Ubah ke JPG atau PNG lalu unggah lagi.');
-          return;
-        }
-        showMsg('');
-        slots[i] = r.result; renderGrid(); renderPreview();
+    if (!okType) { showMsg('File "' + (f.name || '') + '" bukan gambar. Pilih file JPG, PNG, WebP, atau HEIC.'); return; }
+    readFile(f).then(function (url) {
+      return loadImage(url).then(function (im) { return im ? url : null; });
+    }).then(function (url) {
+      if (url || !isHeic) return url;
+      showMsg('Mengubah foto HEIC ke JPG, tunggu sebentar...');
+      return convertHeic(f);
+    }).then(function (url) {
+      if (!url) { showMsg('Browser tidak bisa menampilkan file ini. Ubah ke JPG atau PNG lalu unggah lagi.'); return; }
+      showMsg('');
+      slots[i] = url; renderGrid(); renderPreview();
+    }).catch(function () {
+      showMsg(isHeic
+        ? 'Konversi HEIC gagal. Pastikan terhubung ke internet, atau ubah foto ke JPG atau PNG.'
+        : 'File tidak bisa dibaca. Coba pilih ulang.');
+    });
+  }
+
+  function readFile(blob) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(r.result); };
+      r.onerror = function () { reject(r.error); };
+      r.readAsDataURL(blob);
+    });
+  }
+
+  var heicLoader = null;
+  function loadHeicLib() {
+    if (window.heic2any) return Promise.resolve();
+    if (!heicLoader) {
+      heicLoader = new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js';
+        s.onload = resolve;
+        s.onerror = function () { heicLoader = null; reject(new Error('heic2any')); };
+        document.head.appendChild(s);
       });
-    };
-    r.readAsDataURL(f);
+    }
+    return heicLoader;
+  }
+
+  function convertHeic(f) {
+    return loadHeicLib().then(function () {
+      return window.heic2any({ blob: f, toType: 'image/jpeg', quality: 0.9 });
+    }).then(function (out) {
+      return readFile(Array.isArray(out) ? out[0] : out);
+    }).then(function (url) {
+      return loadImage(url).then(function (im) { return im ? url : null; });
+    });
   }
 
   function showMsg(t) {
