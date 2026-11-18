@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Grid Instagram</title>
 <style>
-  /* Layout: dua bagian. Kiri = pengaturan tiga langkah. Kanan = mekanisme grid (tab Grid / Reels + 6 slot). Latar hitam. */
+  /* Layout: dua bagian. Kiri = pengaturan tiga langkah. Kanan = mekanisme grid (tab Grid / Reels + 9 slot). Latar hitam. */
   :root {
     color-scheme: dark;
     --bg: #000000;
@@ -152,7 +152,7 @@
 <main class="wrap">
   <header>
     <h1><span>Grid</span> Instagram</h1>
-    <p class="lead">Susun 6 postingan sebelum diunggah. Pilih format di kiri, lalu isi kotak di kanan.</p>
+    <p class="lead">Susun 9 postingan sebelum diunggah. Pilih format di kiri, lalu isi kotak di kanan.</p>
   </header>
 
   <div class="layout">
@@ -185,7 +185,7 @@
             <button type="button" id="t34" data-t="3 / 4" aria-pressed="true">Grid 3:4</button>
             <button type="button" id="t45" data-t="4 / 5" aria-pressed="false">Grid 4:5</button>
           </div>
-          <span class="count"><b id="filled">0</b> dari 6 slot terisi</span>
+          <span class="count"><b id="filled">0</b> dari 9 slot terisi</span>
         </div>
         <div class="row" style="margin-top:12px">
           <button type="button" class="btn primary" id="btn-download">Unduh susunan (PNG)</button>
@@ -217,7 +217,7 @@
 
 <script>
 (function () {
-  var COUNT = 6;
+  var COUNT = 9;
   var FORMATS = [
     { id: 'square', group: 'feed',  ratio: '1:1',    name: 'Persegi',       w: 1080, h: 1080 },
     { id: 'p45',    group: 'feed',  ratio: '4:5',    name: 'Potret',        w: 1080, h: 1350 },
@@ -226,7 +226,7 @@
     { id: 'l169',   group: 'feed',  ratio: '16:9',   name: 'Lanskap',       w: 1080, h: 608 },
     { id: 'story',  group: 'story', ratio: '9:16',   name: 'Story & Reels', w: 1080, h: 1920 }
   ];
-  var TONES = ['#141414', '#171415', '#1a1416', '#1d1417', '#20141a', '#23141c'];
+  var TONES = ['#141414', '#161415', '#181415', '#1a1416', '#1c1417', '#1e1418', '#20141a', '#22141b', '#24141c'];
   var slots = new Array(COUNT).fill(null);
   var selected = 0;
   var fmt = FORMATS[1];
@@ -394,7 +394,7 @@
     var cw = 540, ch = Math.round(cw / t.num), gap = 4;
     var cv = document.createElement('canvas');
     cv.width = 3 * cw + 2 * gap;
-    cv.height = 2 * ch + gap;
+    cv.height = 3 * ch + 2 * gap;
     var ctx = cv.getContext('2d');
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, cv.width, cv.height);
